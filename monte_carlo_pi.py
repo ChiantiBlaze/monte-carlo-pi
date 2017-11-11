@@ -5,9 +5,11 @@ from PyQt5.QtWidgets import QWidget, QGridLayout, QRadioButton, \
 							QGroupBox, QPushButton, QLabel, QLineEdit, QTextEdit
 from PyQt5.QtGui import QPixmap
 from PyQt5.QtCore import Qt
+from numbers import Real
+from plot_graph import get_preview_shot
 
 
-class MC_Pi(QWidget):
+class MC_Pi_Framework(QWidget):
 	def __init__(self):
 		super().__init__()
 		self.initUI()
@@ -17,28 +19,29 @@ class MC_Pi(QWidget):
 		# initialize UI
 
 		grid = QGridLayout()
-		grid.addWidget(self.add_graph_panel(),0,0,4,1)
+		grid.addWidget(self.add_graph_panel(),0,0,5,1)
 		grid.addWidget(self.add_log_panel(),0,1)
 		grid.addWidget(self.add_status_panel(),1,1)
 		grid.addWidget(self.add_settings_panel(),2,1)
-		grid.addWidget(self.add_btn_panel(),3,1)
+		grid.addWidget(self.add_confirm_btn(),3,1)
+		grid.addWidget(self.add_start_btn(),4,1)
 
 		self.setLayout(grid)
-		self.setWindowTitle("Monte Carlo Simulation - Value of Pi")
+		self.setWindowTitle("Monte Carlo Simulation - Assuming the Value of π")
 		self.show()
 
 
 	def add_graph_panel(self):
 		box = QGroupBox('Graph')
 		self.display = QLabel()
-		self.display.setFixedSize(550,550)
+		self.display.setFixedSize(600,600)
 		
-		shots = QPixmap('./shots/default.png')
+		shot = QPixmap('./shots/default.png')
 
-		shots = shots.scaled(self.display.size(), Qt.KeepAspectRatio, \
+		shot = shot.scaled(self.display.size(), Qt.KeepAspectRatio, \
 									transformMode = Qt.SmoothTransformation)
 
-		self.display.setPixmap(shots)
+		self.display.setPixmap(shot)
 		
 		layout = QGridLayout()
 		layout.addWidget(self.display)
@@ -46,10 +49,11 @@ class MC_Pi(QWidget):
 
 		return box
 
+
 	def add_log_panel(self):
 		box = QGroupBox('Log')
 		layout = QGridLayout()
-		self.log = QTextEdit("(0.032345, 0.40589)   <font color=#00a8ff>True</font>")
+		self.log = QTextEdit("<font color=red>&lt;Developed by @ChiantiBlaze&gt;</font>\n")
 		self.log.setFixedHeight(120)
 		self.log.setReadOnly(True)
 		layout.addWidget(self.log)
@@ -106,15 +110,64 @@ class MC_Pi(QWidget):
 		ac_layout.addWidget(QLabel('r (Scale)'), 2,0)
 		ac_layout.addWidget(self.criterion_scale, 2,1)
 		ac_box.setLayout(ac_layout)
-
 		layout.addWidget(dsr_box, 0,0)
 		layout.addWidget(ac_box, 1,0)
-
 		box.setLayout(layout)
+
 		return box
 
 
-	def add_btn_panel(self):
+	def add_confirm_btn(self):
+		self.confirm_btn = QPushButton("Confirm Criteria")
+
+		return self.confirm_btn
+
+
+	def add_start_btn(self):
 		self.start_btn = QPushButton("Start Simulation")
+		self.start_btn.setEnabled(False)
 
 		return self.start_btn
+
+
+class MC_Pi(MC_Pi_Framework):
+	def __init__(self):
+		super().__init__()
+
+		self.confirm_btn.clicked.connect(self.confirm_settings)
+
+	def reset_settings(self):
+		self.criterion_x.setText('')
+		self.criterion_y.setText('')
+		self.criterion_scale.setText('')
+
+
+	def block_start_btn(self):
+		self.confirm_btn.setEnabled(True)
+		self.start_btn.setEnabled(False)
+
+
+	def confirm_settings(self):
+		
+		# check if a,b,r is valid
+		try:
+			a = float(self.criterion_x.text())
+			b = float(self.criterion_y.text())
+			r = float(self.criterion_scale.text())
+
+		except ValueError:
+			self.reset_settings()
+			self.display.setPixmap(QPixmap())
+			return
+
+		# get preview shot and update the image
+		self.display.setPixmap(QPixmap())
+
+		get_preview_shot(a,b,r)
+	
+		shot = QPixmap('./shots/preview.png')
+		shot = shot.scaled(self.display.size(), Qt.KeepAspectRatio, \
+									transformMode = Qt.SmoothTransformation)
+		self.display.setPixmap(shot)
+		self.confirm_btn.setEnabled(False)
+		self.start_btn.setEnabled(True)
