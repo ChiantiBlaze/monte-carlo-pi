@@ -5,10 +5,10 @@ import matplotlib.pyplot as plt
 DPI = 10
 
 def get_preview_shot(a,b,r):
-	# Clear previous data
+	# Clear previous data #
 	plt.gcf().clear()
 	
-	# Basic Grid Settings
+	# Basic Grid Settings #
 	plt.gca().set_xlim(a,a+r)
 	plt.gca().set_ylim(b,b+r)
 	plt.gca().set_autoscale_on(False)
@@ -18,12 +18,15 @@ def get_preview_shot(a,b,r):
 	plt.gca().set_yticks(np.arange(b,b+r, r/10))
 	plt.grid(linestyle='dotted')
 
-	# Plot Circle #
-
+	# Plot boundary #
 	boundary = plt.Circle((a,b), radius=r, color='red', alpha=0.2)
 	plt.gca().add_artist(boundary)
 
 	plt.savefig('shots/preview.png')
 
-def start_shot(a,b,r,):
-	numpy.array
+
+def get_plot_shot(x,y):
+	plt.plot(x,y, "v")
+	plt.savefig('shots/plot.png')
+	return (x,y)
+
