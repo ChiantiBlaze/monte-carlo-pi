@@ -7,7 +7,7 @@ from PyQt5.QtGui import QPixmap, QTextCursor
 from PyQt5.QtCore import Qt, QThread, QCoreApplication
 from numbers import Real
 from plot_graph import get_preview_shot, get_plot_shot
-from random import uniform
+from numpy.random import uniform
 from time import sleep
 
 
@@ -22,7 +22,7 @@ class MC_Pi_Framework(QWidget):
 
 		grid = QGridLayout()
 		grid.addWidget(self.add_graph_panel(),0,0,5,1)
-		grid.addWidget(self.add_log_panel(),0,1)
+		grid.addWidget(self.add_comment_panel(),0,1)
 		grid.addWidget(self.add_status_panel(),1,1)
 		grid.addWidget(self.add_settings_panel(),2,1)
 		grid.addWidget(self.add_confirm_btn(),3,1)
@@ -52,13 +52,19 @@ class MC_Pi_Framework(QWidget):
 		return box
 
 
-	def add_log_panel(self):
-		box = QGroupBox('Log')
+	def add_comment_panel(self):
+		box = QGroupBox()
 		layout = QGridLayout()
-		self.log = QTextEdit("<font color=red>&lt;Developed by @ChiantiBlaze&gt;</font>\n")
-		self.log.setFixedHeight(180)
-		self.log.setReadOnly(True)
-		layout.addWidget(self.log)
+		self.comment = QTextEdit()
+		self.comment.setHtml("""
+			if total_dots → &infin; ,<br>
+			&nbsp; <font color=red>π</font> / 4 = (total_true / total_dots)<br>
+			<br>
+			<font color=grey>developed by <font color=red>@ChiantiBlaze</font></font>
+		""")
+		self.comment.setFixedHeight(100)
+		self.comment.setReadOnly(True)
+		layout.addWidget(self.comment)
 		box.setLayout(layout)
 
 		return box
@@ -92,6 +98,19 @@ class MC_Pi_Framework(QWidget):
 
 
 	def add_settings_panel(self):
+		box = QGroupBox("Settings")
+		layout = QGridLayout()
+
+		# Dots per Action RadioBox #
+		dsr_box = QGroupBox("Dots per Action: ")
+		dsr_layout = QGridLayout()
+		self.dsr_p1 = QRadioButton("1"); dsr_layout.addWidget(self.dsr_p1, 0,0)
+		self.dsr_p64 = QRadioButton("64"); dsr_layout.addWidget(self.dsr_p64, 0,1)
+		self.dsr_p256 = QRadioButton("256"); dsr_layout.addWidget(self.dsr_p256, 0,2)
+		self.dsr_p2048 = QRadioButton("2048"); dsr_layout.addWidget(self.dsr_p2048, 0,3)
+		self.dsr_p1.setChecked(True)
+		dsr_box.setLayout(dsr_layout)		
+
 		# Area Criteria #
 		ac_box = QGroupBox("Area Criteria: ")
 		ac_layout = QGridLayout()
@@ -106,7 +125,11 @@ class MC_Pi_Framework(QWidget):
 		ac_layout.addWidget(self.criterion_scale, 2,1)
 		ac_box.setLayout(ac_layout)
 
-		return ac_box
+		layout.addWidget(dsr_box, 0,0)
+		layout.addWidget(ac_box, 1,0)
+		box.setLayout(layout)
+
+		return box
 
 
 	def add_confirm_btn(self):
@@ -161,6 +184,9 @@ class MC_Pi(MC_Pi_Framework):
 			self.display.setPixmap(QPixmap())
 			return
 
+		# modify formula
+		self.status_formula = QLabel('(x-{a})²+(y-{b})²=({r})²'.format(a=a,b=b,r=r))
+
 		# get preview shot and update the image #
 		get_preview_shot(a,b,r)
 		shot = QPixmap('./shots/preview.png')
@@ -182,30 +208,32 @@ class MC_Pi(MC_Pi_Framework):
 		x_range = (a, a+r)
 		y_range = (b, b+r)
 
+		# get counter #
+		cnt = 1
+		if self.dsr_p64.isChecked(): cnt = 64
+		elif self.dsr_p256.isChecked(): cnt = 256
+		elif self.dsr_p2048.isChecked(): cnt = 2048
+
+
 
 		while True:
 			# plot based on random number #
-			x,y = get_plot_shot(uniform(*x_range), uniform(*y_range))
-			outcome = (x-a)**2+(y-b)**2 <= r**2
+			dot_true, dot_false = get_plot_shot(\
+				uniform(*x_range,cnt), uniform(*y_range,cnt),a,b,r)
+			
 			shot = QPixmap('./shots/plot.png')
 			shot = shot.scaled(self.display.size(), Qt.KeepAspectRatio, \
 									transformMode = Qt.SmoothTransformation)
 			self.display.setPixmap(shot)
 
 			# update status #
-			self.status_total.setText(str(int(self.status_total.text())+1))
-			if outcome:
-				self.status_true.setText(str(int(self.status_true.text())+1))
-			else:
-				self.status_false.setText(str(int(self.status_false.text())+1))
+			self.status_total.setText(str(int(self.status_total.text())+cnt))
+			self.status_true.setText(str(int(self.status_true.text())+dot_true))
+			self.status_false.setText(str(int(self.status_false.text())+dot_false))
 
 			if int(self.status_false.text()) != 0:
 				self.status_pi_4.setText(str("%.10f"%(int(self.status_true.text())/int(self.status_total.text()))))
 				self.status_pi.setText(str("%.10f"%(4*int(self.status_true.text())/int(self.status_total.text()))))
 			
 
-			self.log.setHtml(self.log.toPlainText() + \
-					"({}, {})...... <font color={}>{}</font>\n".format(\
-					"%.8f"%x,"%.8f"%y,'red' if outcome else 'grey', outcome))
-			self.log.moveCursor(QTextCursor.End)
 			QCoreApplication.processEvents()

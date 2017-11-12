@@ -25,8 +25,16 @@ def get_preview_shot(a,b,r):
 	plt.savefig('shots/preview.png')
 
 
-def get_plot_shot(x,y):
-	plt.plot(x,y, "v")
+def get_plot_shot(xs,ys,a,b,r):
+	plt.plot(xs,ys, "v")
 	plt.savefig('shots/plot.png')
-	return (x,y)
 
+	dot_true = 0
+	dot_false = 0
+
+	for i in range(0,len(xs)):
+		if (xs[i]-a)**2+(ys[i]-b)**2 <= r**2:
+			dot_true+=1
+			continue
+		dot_false+=1
+	return (dot_true,dot_false)
