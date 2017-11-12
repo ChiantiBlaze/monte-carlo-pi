@@ -3,11 +3,13 @@
 
 from PyQt5.QtWidgets import QWidget, QGridLayout, QRadioButton, \
 							QGroupBox, QPushButton, QLabel, QLineEdit, QTextEdit
-from PyQt5.QtGui import QPixmap
-from PyQt5.QtCore import Qt, QThread
+from PyQt5.QtGui import QPixmap, QTextCursor
+from PyQt5.QtCore import Qt, QThread, QCoreApplication
 from numbers import Real
 from plot_graph import get_preview_shot, get_plot_shot
 from random import uniform
+from time import sleep
+
 
 class MC_Pi_Framework(QWidget):
 	def __init__(self):
@@ -125,10 +127,10 @@ class MC_Pi(MC_Pi_Framework):
 		super().__init__()
 
 		self.confirm_btn.clicked.connect(self.confirm_settings)
-		self.criterion_x.textChanged.connect(self.block_start_btn)
-		self.criterion_x.textChanged.connect(self.block_start_btn)
-		self.criterion_y.textChanged.connect(self.block_start_btn)
-		self.criterion_scale.textChanged.connect(self.block_start_btn)
+		self.criterion_x.textChanged.connect(self.disable_start_btn)
+		self.criterion_x.textChanged.connect(self.disable_start_btn)
+		self.criterion_y.textChanged.connect(self.disable_start_btn)
+		self.criterion_scale.textChanged.connect(self.disable_start_btn)
 
 		self.start_btn.clicked.connect(self.start_plotting)
 
@@ -139,13 +141,13 @@ class MC_Pi(MC_Pi_Framework):
 		self.criterion_scale.setText('')
 
 
-	def block_start_btn(self):
+	def disable_start_btn(self):
 		self.confirm_btn.setEnabled(True)
 		self.start_btn.setEnabled(False)
+		self.start_btn.setText('Start Simulation')
 
 
 	def confirm_settings(self):
-		
 		# check if a,b,r is valid #
 		try:
 			a = float(self.criterion_x.text())
@@ -169,18 +171,17 @@ class MC_Pi(MC_Pi_Framework):
 		# Allow Start button #
 		self.confirm_btn.setEnabled(False)
 		self.start_btn.setEnabled(True)
-
+		
 
 	def start_plotting(self):
+		self.start_btn.setEnabled(False)
+
 		a = float(self.criterion_x.text())
 		b = float(self.criterion_y.text())
 		r = float(self.criterion_scale.text())
 		x_range = (a, a+r)
 		y_range = (b, b+r)
-		from time import sleep
-		from urllib.request import unquote
 
-		from PyQt5.QtGui import QTextCursor
 
 		while True:
 			# plot based on random number #
@@ -198,8 +199,13 @@ class MC_Pi(MC_Pi_Framework):
 			else:
 				self.status_false.setText(str(int(self.status_false.text())+1))
 
+			if int(self.status_false.text()) != 0:
+				self.status_pi_4.setText(str("%.10f"%(int(self.status_true.text())/int(self.status_total.text()))))
+				self.status_pi.setText(str("%.10f"%(4*int(self.status_true.text())/int(self.status_total.text()))))
+			
+
 			self.log.setHtml(self.log.toPlainText() + \
 					"({}, {})...... <font color={}>{}</font>\n".format(\
 					"%.8f"%x,"%.8f"%y,'red' if outcome else 'grey', outcome))
 			self.log.moveCursor(QTextCursor.End)
-			break
+			QCoreApplication.processEvents()
