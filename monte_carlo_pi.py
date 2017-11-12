@@ -73,7 +73,7 @@ class MC_Pi_Framework(QWidget):
 
 	def add_status_panel(self):
 		box = QGroupBox('Status')
-		self.status_formula = QLabel('(x-{a})²+(y-{b})²=({r})²'.format(a=0,b=0,r=1))
+		self.status_formula = QLabel('(x-{a})²+(y-{b})²=({r})²'.format(a=0.0,b=0.0,r=1.0))
 		self.status_total = QLabel("0")
 		self.status_true = QLabel("0")
 		self.status_false = QLabel("0")
@@ -162,6 +162,11 @@ class MC_Pi(MC_Pi_Framework):
 		self.criterion_x.setText('')
 		self.criterion_y.setText('')
 		self.criterion_scale.setText('')
+		self.display.setPixmap(QPixmap())
+		shot = QPixmap('./shots/default.png')
+		shot = shot.scaled(self.display.size(), Qt.KeepAspectRatio, \
+								transformMode = Qt.SmoothTransformation)
+		self.display.setPixmap(shot)
 
 
 	def disable_start_btn(self):
@@ -181,11 +186,10 @@ class MC_Pi(MC_Pi_Framework):
 			self.criterion_scale.setText(str(r))
 		except ValueError:
 			self.reset_settings()
-			self.display.setPixmap(QPixmap())
 			return
 
 		# modify formula
-		self.status_formula = QLabel('(x-{a})²+(y-{b})²=({r})²'.format(a=a,b=b,r=r))
+		self.status_formula.setText('(x-{a})²+(y-{b})²=({r})²'.format(a=a,b=b,r=r))
 
 		# get preview shot and update the image #
 		get_preview_shot(a,b,r)
